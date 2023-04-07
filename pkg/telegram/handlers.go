@@ -1,6 +1,7 @@
 package telegram
 
 import (
+	"fmt"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 
 	"log"
@@ -26,14 +27,23 @@ func (b *Bot) handleMessage(message *tgbotapi.Message) {
 	log.Printf("[%s] %s", message.From.UserName, message.Text)
 
 	msg := tgbotapi.NewMessage(message.Chat.ID, message.Text)
-	msg.ReplyToMessageID = message.MessageID
 
 	b.bot.Send(msg)
 }
 
 func (b *Bot) handleStartCommand(message *tgbotapi.Message) error {
-	msg := tgbotapi.NewMessage(message.Chat.ID, "Бот активировался")
-	_, err := b.bot.Send(msg)
+	authLink, err := b.generateAuthorizationLink(message.Chat.ID)
+	if err != nil {
+		return err
+	}
+
+	msg := tgbotapi.NewMessage(
+		message.Chat.ID,
+		fmt.Sprintf(startReply, authLink),
+	)
+
+	_, err = b.bot.Send(msg)
+
 	return err
 }
 

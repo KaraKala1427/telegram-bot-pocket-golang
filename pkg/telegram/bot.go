@@ -2,17 +2,24 @@ package telegram
 
 import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
+	"github.com/karakala1427/telegram-bot-pocket-golang/pkg/repository"
 	"github.com/zhashkevych/go-pocket-sdk"
 	"log"
 )
 
 type Bot struct {
-	bot          *tgbotapi.BotAPI
-	pocketClient *pocket.Client
+	bot             *tgbotapi.BotAPI
+	pocketClient    *pocket.Client
+	tokenRepository repository.TokenRepository
+	redirectURL     string
 }
 
-func NewBot(bot *tgbotapi.BotAPI, pocketClient *pocket.Client) *Bot {
-	return &Bot{bot: bot, pocketClient: pocketClient}
+func NewBot(bot *tgbotapi.BotAPI, pocketClient *pocket.Client, tr repository.TokenRepository, redirectURL string) *Bot {
+	return &Bot{
+		bot:             bot,
+		pocketClient:    pocketClient,
+		tokenRepository: tr,
+		redirectURL:     redirectURL}
 }
 
 func (b *Bot) Start() error {
@@ -35,7 +42,10 @@ func (b *Bot) handleUpdates(updates tgbotapi.UpdatesChannel) {
 		}
 
 		if update.Message.IsCommand() {
-			b.handleMessage(update.Message)
+			err := b.handleCommand(update.Message)
+			if err != nil {
+				log.Fatal(err)
+			}
 			continue
 		}
 
